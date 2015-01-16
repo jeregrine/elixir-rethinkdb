@@ -3,27 +3,29 @@ defmodule Rethinkdb.Rql.TermsConstructor do
 
   defmacro __using__(_opts) do
     quote do
-      defrecordp :term, type: nil, args: [], optargs: []
+      defmodule Term do
+        defstruct type: nil, args: [], optargs: []
+      end
 
       # Helper to terms create
-      defp new_term(type, args // []) do
-        new_term(type, args, [], rql())
+      defp new_term(type, args \\ []) do
+        new_term(type, args, [], %Rql{})
       end
 
       defp new_term(type, args, nil) do
-        new_term(type, args, [], rql())
+        new_term(type, args, [], %Rql{})
       end
 
-      defp new_term(type, args, rql() = query) do
+      defp new_term(type, args, %Rql{} = query) do
         new_term(type, args, [], query)
       end
 
       defp new_term(type, args, opts) when is_list(opts) or is_record(opts, HashDict) do
-        new_term(type, args, opts, rql())
+        new_term(type, args, opts, %Rql{})
       end
 
-      defp new_term(type, args, optargs, rql(terms: terms)) do
-        rql(terms: terms ++ [term(type: type, args: args, optargs: optargs)])
+      defp new_term(type, args, optargs, %Rql{terms: terms}) do
+        %Rql{terms: terms ++ [term(type: type, args: args, optargs: optargs)]}
       end
 
       defp make_array(items) when is_list(items) do
@@ -42,12 +44,12 @@ defmodule Rethinkdb.Rql.TermsConstructor do
       defp func(func) when is_function(func) do
         {_, arity} = :erlang.fun_info(func, :arity)
         arg_count  = :lists.seq(1, arity)
-        func_args  = lc n inlist arg_count, do: var(n)
+        func_args  = for n <- arg_count, do: var(n)
 
         args = case apply(func, func_args) do
           [{key, _}|_] = obj when key != __MODULE__ -> [make_obj(obj)]
           array when is_list(array) -> [make_array(array)]
-          rql() = query -> [query]
+          %Rql{} = query -> [query]
         end
 
         new_term(:'FUNC', [expr(arg_count) | args])

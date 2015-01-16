@@ -2,10 +2,15 @@ defmodule Rethinkdb.Mixfile do
   use Mix.Project
 
   def project do
-    [ app: :'rethinkdb',
-      version: "0.2.2",
-      elixir: "~> 0.10.2",
-      deps: deps(Mix.env) ]
+    [ app: :rethinkdb,
+      version: "0.2.3",
+      elixir: "~> 1.0",
+      deps: deps,
+
+      # Hex
+      description: description,
+      package: package
+    ]
   end
 
   # Configuration for the OTP application
@@ -23,26 +28,24 @@ defmodule Rethinkdb.Mixfile do
 
   def env(_), do: []
 
-  # Returns the list of dependencies in the format:
-  def deps(:prod) do
+  defp deps() do
     [
-      { :protobuf, github: "azukiapp/elixir-protobuf", tag: "v0.0.3" },
+      {:exprotobuf, "~> 0.8.5"},
+      {:gpb, github: "tomas-abrahamsson/gpb", tag: "3.17.2"},
+      {:ex_doc, github: "elixir-lang/ex_doc", only: :docs},
+      {:mock, "~> 0.1.0", only: :test}
     ]
   end
 
-  def deps(:test) do
-    deps(:prod) ++ [
-      {:meck, github: "eproxus/meck", tag: "0.8.1", override: true},
-      {:mock, github: "jjh42/mock"}
-    ]
+  defp description do
+    """
+    Client application for Rethinkdb
+    """
   end
 
-  def deps(:docs) do
-    deps(:prod) ++
-      [ { :ex_doc, github: "elixir-lang/ex_doc" } ]
-  end
-
-  def deps(_) do
-    deps(:prod)
+  defp package do
+    [contributors: ["Everton Ribeiro"],
+      licenses: ["Apache 2.0", "Bitdeli Chef", ],
+      links: %{"GitHub" => "https://github.com/azukiapp/elixir-rethinkdb"}]
   end
 end

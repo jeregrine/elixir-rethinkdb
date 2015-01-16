@@ -13,7 +13,7 @@ defmodule QL2 do
   @doc """
   Helper to get a proto version
   """
-  def version(v // :V0_2) do
+  def version(v \\ :V0_2) do
     QL2.VersionDummy.Version.value(v)
   end
 

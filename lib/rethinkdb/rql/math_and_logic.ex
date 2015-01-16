@@ -3,59 +3,59 @@ defmodule Rethinkdb.Rql.MathAndLogic do
 
   defmacro __using__(_opts) do
     quote do
-      def add(value, rql() = query) do
+      def add(value, %Rql{} = query) do
         new_term(:'ADD', [value], query)
       end
 
-      def sub(value, rql() = query) do
+      def sub(value, %Rql{} = query) do
         new_term(:'SUB', [value], query)
       end
 
-      def mul(value, rql() = query) do
+      def mul(value, %Rql{} = query) do
         new_term(:'MUL', [value], query)
       end
 
-      def div(value, rql() = query) do
+      def div(value, %Rql{} = query) do
         new_term(:'DIV', [value], query)
       end
 
-      def mod(value, rql() = query) do
+      def mod(value, %Rql{} = query) do
         new_term(:'MOD', [value], query)
       end
 
-      def _and(value, rql() = query) do
+      def _and(value, %Rql{} = query) do
         new_term(:'ALL', [value], query)
       end
 
-      def _or(value, rql() = query) do
+      def _or(value, %Rql{} = query) do
         new_term(:'ANY', [value], query)
       end
 
-      def _not(rql() = query) do
+      def _not(%Rql{} = query) do
         new_term(:'NOT', [], query)
       end
 
-      def eq(value, rql() = query) do
+      def eq(value, %Rql{} = query) do
         new_term(:'EQ', [value], query)
       end
 
-      def ne(value, rql() = query) do
+      def ne(value, %Rql{} = query) do
         new_term(:'NE', [value], query)
       end
 
-      def gt(value, rql() = query) do
+      def gt(value, %Rql{} = query) do
         new_term(:'GT', [value], query)
       end
 
-      def ge(value, rql() = query) do
+      def ge(value, %Rql{} = query) do
         new_term(:'GE', [value], query)
       end
 
-      def lt(value, rql() = query) do
+      def lt(value, %Rql{} = query) do
         new_term(:'LT', [value], query)
       end
 
-      def le(value, rql() = query) do
+      def le(value, %Rql{} = query) do
         new_term(:'LE', [value], query)
       end
     end

@@ -62,7 +62,7 @@ defmodule Rethinkdb.Case do
   end
 
   def table_to_test(tables, opts) when is_list(tables) do
-    lc table inlist tables do
+    for table <- tables do
       table_to_test(table, opts)
     end
   end

@@ -1,14 +1,15 @@
 defmodule Rethinkdb.Connection.Options do
-  # Fields and default values for connection record
-  @fields [ id: nil, host: "localhost", port: 28015, auth_key: "",
-            timeout: 20, db: nil]
 
-  # Record def
-  Record.deffunctions(@fields, __ENV__)
-  Record.import __MODULE__, as: :ropts
+  @host "localhost"
+  @port 28015
+  @timeout 20
+  @auth_key ""
+  @db nil
 
+  defstruct id: nil, host: @host, port: @port, auth_key: @auth_key, timeout: @timeout, db: @db
   @type t   :: __MODULE__
   @type uri :: String.t
+
 
   @doc """
   Return a new options according to the instructions
@@ -16,7 +17,7 @@ defmodule Rethinkdb.Connection.Options do
 
   ## Example
 
-      iex> #{__MODULE__}.new("rethinkdb://#{@fields[:host]}:#{@fields[:port]}/test")
+      iex> #{__MODULE__}.new("rethinkdb://#{@host}:#{@port}/test")
       #{__MODULE__}[host: "localhost", port: 28015, auth_key: nil, timeout: 20, db: "test"]
   """
   @spec new(uri) :: t
@@ -30,10 +31,10 @@ defmodule Rethinkdb.Connection.Options do
   ## Example
 
       iex> Options.new(db: "teste").to_uri
-      "rethinkdb://#{@fields[:host]}:#{@fields[:port]}/test
+      "rethinkdb://#{@host}:#{@port}/test
   """
   @spec to_uri(t) :: String.t
-  def to_uri(ropts(db: db, port: port, host: host, auth_key: auth_key)) do
+  def to_uri(%__MODULE__{db: db, port: port, host: host, auth_key: auth_key}) do
     if auth_key != nil do
       auth_key = "#{auth_key}@"
     end
@@ -41,19 +42,17 @@ defmodule Rethinkdb.Connection.Options do
   end
 
   # New record from valid uri scheme
-  defp extract_from_uri(URI.Info[
-    scheme: "rethinkdb", host: host, port: port, userinfo: auth_key, path: db
-  ]) do
+  defp extract_from_uri(%URI{scheme: "rethinkdb", host: host, port: port, userinfo: auth_key, path: db}) do
     db = List.last(String.split(db || "", "/"))
-    ropts([
+    %__MODULE__{
       host: host,
-      port: port || @fields[:port],
-      auth_key: auth_key || @fields[:auth_key],
-      db: db != "" && db || @fields[:db]
-    ])
+      port: port || @port,
+      auth_key: auth_key || @auth_key,
+      db: db != "" && db || @db
+    }
   end
 
   defp extract_from_uri(_) do
-    {:error, "invalid uri, ex: rethinkdb://#{@fields[:auth_key]}:#{@fields[:db]}/[database]"}
+    {:error, "invalid uri, ex: rethinkdb://#{@auth_key}:#{@db}/[database]"}
   end
 end

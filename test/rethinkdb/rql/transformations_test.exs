@@ -50,7 +50,7 @@ defmodule Rethinkdb.Rql.Transformations.Test do
   test "takes a sequence of objects and a list of fields", var do
     result = var[:table].with_fields([:superhero, :nemesis]).run!
     assert 2 = length(result)
-    lc hero inlist result do
+    for hero <- result do
       assert hero[:superhero] != nil
       assert hero[:nemesis] != nil
     end

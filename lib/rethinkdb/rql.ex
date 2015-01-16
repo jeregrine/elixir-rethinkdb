@@ -2,8 +2,7 @@ defmodule Rethinkdb.Rql do
   alias Rethinkdb.Connection
   alias Rethinkdb.Connection.Options
 
-  # Geral record
-  defrecordp :rql, __MODULE__, terms: []
+  defstruct terms: []
 
   @type t      :: __MODULE__
   @type conn   :: Rethinkdb.Connection
@@ -59,7 +58,7 @@ defmodule Rethinkdb.Rql do
   @spec connect(params | url) :: conn
   def connect, do: connect([])
 
-  def connect(opts) when is_record(opts, Options) do
+  def connect(%Options{} = opts) do
     Connection.connect!(opts)
   end
 
@@ -75,10 +74,10 @@ defmodule Rethinkdb.Rql do
   Call run on the connection with a query to execute the query.
 
       iex> {:ok, heroes} = r.table("marvel").run(conn)
-      iex> lc hero inlist heroes, do: IO.inspect(hero)
+      iex> for hero <- heroes, do: IO.inspect(hero)
   """
   @spec run(conn, t) :: response
-  def run(conn, rql() = query) do
+  def run(conn, %__MODULE__{} = query) do
     conn.run(build(query))
   end
 
@@ -91,10 +90,10 @@ defmodule Rethinkdb.Rql do
 
       iex> r.connect.repl
       iex> {:ok, heroes} = r.table("marvel").run
-      iex> lc hero inlist heroes, do: IO.inspect(hero)
+      iex> for hero <- heroes, do: IO.inspect(hero)
   """
   @spec run(t) :: response
-  def run(rql() = query) do
+  def run(%__MODULE__{} = query) do
     Connection.run(build(query))
   end
 
@@ -103,7 +102,7 @@ defmodule Rethinkdb.Rql do
   occurs, see `run`.
   """
   @spec run!(conn, t) :: any | [any] | no_return
-  def run!(conn, rql() = query) do
+  def run!(conn, %__MODULE__{} = query) do
     conn.run!(build(query))
   end
 
@@ -112,7 +111,7 @@ defmodule Rethinkdb.Rql do
   occurs, see `run`.
   """
   @spec run!(t) :: any | [any] | no_return
-  def run!(rql() = query) do
+  def run!(%__MODULE__{} = query) do
     Connection.run!(build(query))
   end
 end

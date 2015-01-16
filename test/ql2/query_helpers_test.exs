@@ -16,7 +16,7 @@ defmodule QL2.QueryHelpers.Test do
   test "encode to send in socket" do
     query  = Query.new_start(Term.new, "test", 1)
     encode = query.encode
-    binary = [<<iolist_size(encode) :: [size(32), little]>>, encode]
+    binary = [<<:erlang.iolist_size(encode) :: size(32)-little>>, encode]
     assert binary == query.encode_to_send
   end
 end

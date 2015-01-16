@@ -3,27 +3,27 @@ defmodule Rethinkdb.Rql.Transformations do
 
   defmacro __using__(_opts) do
     quote do
-      def map(func, rql() = query) when is_function(func) do
+      def map(func, %Rql{} = query) when is_function(func) do
         new_term(:'MAP', [func(func)], query)
       end
 
-      def map(predicate, rql() = query) do
+      def map(predicate, %Rql{} = query) do
         map(fn _ -> predicate end, query)
       end
 
-      def with_fields(fields, options // [], rql() = query) do
+      def with_fields(fields, options \\ [], %Rql{} = query) do
         new_term(:'WITH_FIELDS', [fields, options], query)
       end
 
-      def concat_map(func, rql() = query) do
+      def concat_map(func, %Rql{} = query) do
         new_term(:'CONCATMAP', [func(func)], query)
       end
 
-      def order_by([{:index, _}|_] = opts, rql() = query) do
+      def order_by([{:index, _}|_] = opts, %Rql{} = query) do
         order_by([], opts, query)
       end
 
-      def order_by(keys_or_function, opts // [], rql() = query) do
+      def order_by(keys_or_function, opts \\ [], %Rql{} = query) do
         if is_function(keys_or_function) do
           keys_or_function = func(keys_or_function)
         end
@@ -46,28 +46,28 @@ defmodule Rethinkdb.Rql.Transformations do
         new_term(:'ASC', [field])
       end
 
-      def skip(n, rql() = query) do
+      def skip(n, %Rql{} = query) do
         new_term(:'SKIP', [n], query)
       end
 
-      def limit(n, rql() = query) do
+      def limit(n, %Rql{} = query) do
         new_term(:'LIMIT', [n], query)
       end
 
       # TODO: Test with predicate
-      def indexes_of(datum, rql() = query) do
+      def indexes_of(datum, %Rql{} = query) do
         new_term(:'INDEXES_OF', [datum], query)
       end
 
-      def is_empty?(rql() = query) do
+      def is_empty?(%Rql{} = query) do
         new_term(:'IS_EMPTY', [], query)
       end
 
-      def union(sequence, rql() = query) do
+      def union(sequence, %Rql{} = query) do
         new_term(:'UNION', [sequence], query)
       end
 
-      def sample(number, rql() = query) do
+      def sample(number, %Rql{} = query) do
         new_term(:'SAMPLE', [number], query)
       end
     end

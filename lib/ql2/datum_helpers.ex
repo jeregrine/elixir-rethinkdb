@@ -3,8 +3,6 @@ defmodule QL2.DatumHelpers do
 
   defmacro __using__(_opts) do
     quote do
-      Record.import __MODULE__, as: :datum
-
       @typep json_term :: :null | boolean | number | binary | Dict.t | [json_term]
       @typep t :: __MODULE__
 
@@ -26,11 +24,11 @@ defmodule QL2.DatumHelpers do
       end
 
       def value(datum(type: :'R_ARRAY', r_array: array)) do
-        lc item inlist array, do: value(item)
+        for item <- array, do: value(item)
       end
 
       def value(datum(type: :'R_OBJECT', r_object: object)) do
-        HashDict.new(lc QL2.Datum.AssocPair[key: key, val: value] inlist object do
+        HashDict.new(for QL2.Datum.AssocPair.new(key: key, val: value) <- object do
           {:'#{key}', value(value)}
         end)
       end
@@ -51,17 +49,17 @@ defmodule QL2.DatumHelpers do
           rql when is_record(rql, Rql) ->
             Rql.build(rql)
           obj  when is_record(obj, HashDict) ->
-            object = lc {key, value} inlist obj.to_list do
+            object = for {key, value} <- obj.to_list do
               QL2.Datum.AssocPair.new(key: "#{key}", val: from_value(value))
             end
             new(type: :'R_OBJECT', r_object: object)
           [{_, _} | _] = obj ->
-            object = lc {key, value} inlist obj do
+            object = for {key, value} <- obj do
               QL2.Datum.AssocPair.new(key: "#{key}", val: from_value(value))
             end
             new(type: :'R_OBJECT', r_object: object)
           list when is_list(list) ->
-            values = lc item inlist list, do: from_value(item)
+            values = for item <- list, do: from_value(item)
             new(type: :'R_ARRAY', r_array: values)
         end
       end

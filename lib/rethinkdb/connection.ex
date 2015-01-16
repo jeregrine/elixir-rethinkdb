@@ -1,5 +1,5 @@
 defmodule Rethinkdb.Connection do
-  use GenServer.Behaviour
+  use GenServer
 
   alias Rethinkdb.RqlDriverError
   alias Rethinkdb.RqlRuntimeError
@@ -13,8 +13,11 @@ defmodule Rethinkdb.Connection do
   alias QL2.Query
   alias QL2.Response
 
-  defrecordp :conn, __MODULE__, pid: nil
-  defrecord State, options: nil, socket: nil, next_token: 1
+  defstruct pid: nil
+
+  defmodule State do
+    defstruct options: nil, socket: nil, next_token: 1
+  end
 
   @type t :: __MODULE__
   @type response :: success | error
@@ -26,17 +29,17 @@ defmodule Rethinkdb.Connection do
 
   # Public API
   @spec connect(Options.t) :: {:ok, t} | {:error, any}
-  def connect(Options[] = options) do
+  def connect(%Options{} = options) do
     case Supervisor.start_worker(options) do
       {:ok, pid} when is_pid(pid) ->
-        {:ok, conn(pid: pid)}
+        {:ok, %__MODULE__{pid: pid}}
       other ->
         other
     end
   end
 
   @spec connect!(Options.t) :: t | no_return
-  def connect!(Options[] = options) do
+  def connect!(%Options{} = options) do
     case connect(options) do
       {:ok, conn} -> conn
       {:error, error} ->
@@ -47,7 +50,7 @@ defmodule Rethinkdb.Connection do
   end
 
   @spec close(t) :: no_return
-  def close(conn(pid: pid)) do
+  def close(%__MODULE__{pid: pid}) do
     monitor_ref = Process.monitor(pid)
     Process.exit(pid, :shutdown)
     receive do
@@ -59,7 +62,7 @@ defmodule Rethinkdb.Connection do
 
   # TODO: Using Process.wheries is not correct to do this
   @spec repl(t) :: t
-  def repl(conn(pid: pid) = conn) do
+  def repl(%__MODULE__{pid: pid} = conn) do
     if Process.whereis(@default_key), do:
       Process.unregister(@default_key)
     Process.register(pid, @default_key)
@@ -70,44 +73,44 @@ defmodule Rethinkdb.Connection do
   def get_repl do
     case Process.whereis(@default_key) do
       nil -> {:error, "Not have a default connection" }
-      pid -> conn(pid: pid)
+      pid -> %__MODULE__{pid: pid}
     end
   end
 
   @spec open?(t) :: boolean
-  def open?(conn(pid: pid)) do
+  def open?(%__MODULE__{pid: pid}) do
     :gen_server.call(pid, :open?)
   end
 
   @spec options(t) :: Options.t
-  def options(conn(pid: pid)) do
+  def options(%__MODULE__{pid: pid}) do
     :gen_server.call(pid, :options)
   end
 
   @spec db(t) :: String.t
-  def db(conn(pid: pid)) do
+  def db(%__MODULE__{pid: pid}) do
     :gen_server.call(pid, :db)
   end
 
   @spec use(String.t, t) :: Option.t
-  def use(database, conn(pid: pid) = conn) do
+  def use(database, %__MODULE__{pid: pid} = conn) do
     :ok = :gen_server.cast(pid, {:use, database})
     conn
   end
 
   @spec run(Term.t, t) :: response
-  def run(Term[] = query, conn(pid: pid)) do
+  def run(%Term{} = query, %__MODULE__{pid: pid}) do
     :gen_server.call(pid, {:run, query})
   end
 
   @spec run(Term.t) :: response
-  def run(Term[] = query) do
-    run(query, conn(pid: @default_key))
+  def run(%Term{} = query) do
+    run(query, %__MODULE__{pid: @default_key})
   end
 
   # TODO: Add test for error on the socket
   @spec run!(Term.t, t) :: any | [any] | no_return
-  def run!(Term[] = query, conn() = conn) do
+  def run!(%Term{} = query, %__MODULE{} = conn) do
     case run(query, conn) do
       {:ok, response} -> response
       {:error, msg} when is_bitstring(msg) ->
@@ -118,45 +121,45 @@ defmodule Rethinkdb.Connection do
   end
 
   @spec run!(Term.t) :: any | [any] | no_return
-  def run!(Term[] = query) do
-    run!(query, conn(pid: @default_key))
+  def run!(%Term{} = query) do
+    run!(query, %__MODULE__{pid: @default_key})
   end
 
   # Supervisor API
   @spec start_link(Options.t) :: {:ok, pid}
-  def start_link(Options[] = options) do
+  def start_link(%Options{} = options) do
     :gen_server.start_link(__MODULE__, options, [])
   end
 
   # GenServer API
   @spec init(Options.t) :: {:ok, State.t} | { :stop, String.t }
-  def init(Options[] = options) do
+  def init(%Options{} = options) do
     Process.flag(:trap_exit, true)
     socket = Socket.connect!(options).process!(self)
     Authentication.auth!(socket, options)
-    {:ok, State.new(options: options, socket: socket)}
+    {:ok, %State{options: options, socket: socket}}
   rescue
     x in [Socket.Error] ->
       { :stop, x.message }
   end
 
-  def terminate(_reason, State[socket: socket]) do
+  def terminate(_reason, %State{socket: socket}) do
     socket.close; :ok
   end
 
-  def handle_call(:open?, _from, State[socket: socket] = state) do
+  def handle_call(:open?, _from, %State{socket: socket} = state) do
     { :reply, socket.open?, state }
   end
 
-  def handle_call(:options, _from, State[options: options] = state) do
+  def handle_call(:options, _from, %State{options: options} = state) do
     { :reply, options, state}
   end
 
-  def handle_call(:db, _from, State[options: Options[db: db]] = state) do
+  def handle_call(:db, _from, %State{options: %Options{db: db}} = state) do
     { :reply, db, state}
   end
 
-  def handle_call({:run, Term[] = term}, _from,
+  def handle_call({:run, %Term{} = term}, _from,
     State[next_token: token, socket: socket,
       options: Options[db: db, timeout: timeout]
     ] = state) do
@@ -176,7 +179,7 @@ defmodule Rethinkdb.Connection do
   end
 
   defp send_and_recv(query, socket, timeout) do
-    socket.send!(query.encode_to_send)
+    socket.tcp_send!(query.encode_to_send)
     Response.decode(recv(socket, timeout)).value
   rescue
     x in [Socket.Error]  -> {:error, x.message}

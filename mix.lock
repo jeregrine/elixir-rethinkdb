@@ -1,5 +1,5 @@
-[ "ex_doc": {:git, "git://github.com/elixir-lang/ex_doc.git", "c13d10aaed19ef05c2c8362b9b555926e9770902", []},
-  "gpb": {:git, "git://github.com/tomas-abrahamsson/gpb.git", "e07d6dae832120ce26276fac30eb79b6d94b0054", []},
-  "meck": {:git, "git://github.com/eproxus/meck.git", "1286aba1cb6bbd6c9fc3f817740758b224843ee7", [{:tag, "0.8.1"}]},
-  "mock": {:git, "git://github.com/jjh42/mock.git", "e54a8f8ac3b69b5a610399f7fb5efe65446526eb", []},
-  "protobuf": {:git, "git://github.com/azukiapp/elixir-protobuf.git", "88171f9cacfb5e5e94b48151784bf68b9d2023f9", [{:tag, "v0.0.3"}]} ]
+%{"ex_doc": {:git, "git://github.com/elixir-lang/ex_doc.git", "225fdbc872f18eddf5d83dbe2b300cfa6279215e", []},
+  "exprotobuf": {:hex, :exprotobuf, "0.8.5"},
+  "gpb": {:git, "git://github.com/tomas-abrahamsson/gpb.git", "cad0d21c8d1867dc7f2ce0f6792c998ffa52fa4b", [tag: "3.17.2"]},
+  "meck": {:hex, :meck, "0.8.2"},
+  "mock": {:hex, :mock, "0.1.0"}}

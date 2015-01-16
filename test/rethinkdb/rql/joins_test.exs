@@ -17,7 +17,7 @@ defmodule Rethinkdb.Rql.Joins.Test do
       ]
     ]
 
-    lc {table_name, registers} inlist data do
+    for {table_name, registers} <- data do
       r.table(table_name).insert(registers).run!
     end
 
@@ -31,7 +31,7 @@ defmodule Rethinkdb.Rql.Joins.Test do
     end).run!
 
     assert 2 == length(result)
-    lc heroes inlist result do
+    for heroes <- result do
       assert heroes[:left][:strength] < heroes[:right][:strength]
     end
   end
@@ -43,7 +43,7 @@ defmodule Rethinkdb.Rql.Joins.Test do
     end).run!
 
     assert 3 == length(result)
-    lc heroes inlist result do
+    for heroes <- result do
       assert heroes[:left][:strength] < heroes[:right][:strength]
     end
   end
