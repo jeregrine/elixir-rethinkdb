@@ -7,11 +7,12 @@ defmodule Rethinkdb.Connection.Authentication do
 
   @spec auth!(Socket.t, Options.t) :: :ok | no_return
   def auth!(%Socket{} = socket, %Options{auth_key: auth_key, timeout: timeout} = options) do
-    version = :binary.encode_unsigned(QL2.version, :little)
+    v0_2 = 0x723081e1
+    version = :binary.encode_unsigned(v0_2, :little)
     auth_key = [version, <<:erlang.iolist_size(auth_key) :: size(32)-little>>, auth_key]
-    :ok = socket.tcp_send!(auth_key)
+    :ok = Socket.tcp_send!(auth_key, socket)
 
-    case socket.recv_until_null!(timeout * 1000) do
+    case Socket.recv_until_null!(timeout*1000, socket) do
       "SUCCESS" -> :ok
       response ->
         raise RqlDriverError, msg:

@@ -1,5 +1,6 @@
 defmodule Rethinkdb.Rql.TermsConstructor do
   @moduledoc false
+  alias Rethinkdb.Rql
 
   defmacro __using__(_opts) do
     quote do
@@ -16,16 +17,16 @@ defmodule Rethinkdb.Rql.TermsConstructor do
         new_term(type, args, [], %Rql{})
       end
 
-      defp new_term(type, args, %Rql{} = query) do
+      defp new_term(type, args, %{} = query) do
         new_term(type, args, [], query)
       end
 
-      defp new_term(type, args, opts) when is_list(opts) or is_record(opts, HashDict) do
+      defp new_term(type, args, opts) when is_list(opts) do
         new_term(type, args, opts, %Rql{})
       end
 
-      defp new_term(type, args, optargs, %Rql{terms: terms}) do
-        %Rql{terms: terms ++ [term(type: type, args: args, optargs: optargs)]}
+      defp new_term(type, args, optargs, %{terms: terms}) do
+        %Rql{terms: terms ++ [%Term{type: type, args: args, optargs: optargs}]}
       end
 
       defp make_array(items) when is_list(items) do
@@ -49,7 +50,7 @@ defmodule Rethinkdb.Rql.TermsConstructor do
         args = case apply(func, func_args) do
           [{key, _}|_] = obj when key != __MODULE__ -> [make_obj(obj)]
           array when is_list(array) -> [make_array(array)]
-          %Rql{} = query -> [query]
+          %{} = query -> [query]
         end
 
         new_term(:'FUNC', [expr(arg_count) | args])

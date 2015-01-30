@@ -7,7 +7,7 @@ defmodule Rethinkdb.Rql.Build do
     quote do
       # Build a rql terms in a ql2 terms
       @doc false
-      def build(rql(terms: terms)) do
+      def build(%{terms: terms}) do
         Enum.reduce terms, nil, &build_terms(&1, &2)
       end
 
@@ -17,11 +17,11 @@ defmodule Rethinkdb.Rql.Build do
         x -> raise "Error to create Datum from: #{inspect(value)}"
       end
 
-      defp build_terms(term(type: :'EXPR', args: [value]), _left) do
+      defp build_terms(%{type: :'EXPR', args: [value]}, _left) do
         build_term_datum(value)
       end
 
-      defp build_terms(term(type: type, args: args, optargs: optargs), left) do
+      defp build_terms(%{type: type, args: args, optargs: optargs}, left) do
         optargs = format_opts(optargs)
         args    = format_args(args)
         if left != nil, do: args = [left | args]
@@ -32,10 +32,6 @@ defmodule Rethinkdb.Rql.Build do
         for arg <- args, do: format_arg(arg)
       end
 
-      defp format_opts(args) when is_record(args, HashDict) do
-        format_opts(args.to_list)
-      end
-
       defp format_opts(optargs) do
         for {key, value} <- optargs do
           Term.AssocPair.new(key: "#{key}", val: format_arg(value))
@@ -44,8 +40,8 @@ defmodule Rethinkdb.Rql.Build do
 
       defp format_arg(arg) do
         case arg do
-          %Rql{}  = rql  -> build(rql)
-          term() = term -> build_terms(term, nil)
+          %{__struct__: :Rql}  = rql  -> build(rql)
+          %{__struct__: :Term} = term -> build_terms(term, nil)
           arg -> build_term_datum(arg)
         end
       end

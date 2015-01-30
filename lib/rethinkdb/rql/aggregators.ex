@@ -3,7 +3,7 @@ defmodule Rethinkdb.Rql.Aggregators do
   defmacro __using__(_opts) do
     quote do
       # Aggregators
-      def count(filter \\ nil, %Rql{} = query) do
+      def count(filter \\ nil, %{} = query) do
         if filter, do: query = filter(filter, query)
         new_term(:'COUNT', [], query)
       end

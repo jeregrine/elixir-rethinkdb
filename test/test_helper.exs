@@ -4,6 +4,8 @@ defmodule Rethinkdb.Case do
   use ExUnit.CaseTemplate
   use Rethinkdb
 
+  alias Rethinkdb.Rql
+
   using _ do
     quote do
       import unquote(__MODULE__)
@@ -12,21 +14,19 @@ defmodule Rethinkdb.Case do
   end
 
   def default_timeout do
-    System.get_env("WERCKER") && {:ok, 8000} ||
-    :application.get_env(Mix.project[:app], :timeout)
+    System.get_env("WERCKER") && 8000 || 30
   end
 
   def default_options do
     env_url = System.get_env("RETHINKDB_URL")
-    {:ok, default} = :application.get_env(Mix.project[:app], :rethinkdb_uri)
-    Rethinkdb.Connection.Options.new(env_url || default)
+    Rethinkdb.Connection.Options.new(env_url || "rethinkdb://localhost:28015/elixir_drive_test")
   end
 
   def default_connect do
-    {:ok, timeout} = default_timeout
-    options = default_options.timeout(timeout)
-    r.connect(options).repl
-    case r.db(options.db).info().run do
+    timeout = default_timeout
+    options = %{default_options | timeout: timeout}
+    r.connect(options) |> Rethinkdb.Connection.repl
+    case r.db(options.db) |> Rql.info |> Rql.run do
       {:ok, _} -> :ok
       _ ->
         r.db_create(options.db).run!
@@ -34,7 +34,7 @@ defmodule Rethinkdb.Case do
   end
 
   # TODO: Fix meck bug in expectation with raise error
-  defmacro mock_with_raise(mock_module, opts // [], mocks, test) do
+  defmacro mock_with_raise(mock_module, opts, mocks, test) do
     quote do
       :meck.new(unquote(mock_module), unquote(opts))
       Mock._install_mock(unquote(mock_module), unquote(mocks))

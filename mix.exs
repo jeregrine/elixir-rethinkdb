@@ -17,16 +17,9 @@ defmodule Rethinkdb.Mixfile do
   def application do
     [
       mod: { Rethinkdb.App, [] },
-      applications: [],
-      env: Keyword.merge([{:timeout, 30}], env(Mix.env))
+      applications: []
     ]
   end
-
-  def env(:test) do
-    [rethinkdb_uri: "rethinkdb://localhost:28015/elixir_drive_test"]
-  end
-
-  def env(_), do: []
 
   defp deps() do
     [

@@ -3,12 +3,7 @@ defmodule QL2 do
   Defines the records based on the file ql2.proto
   to be used in communicating with rethinkdb.
   """
-  use Protobuf, from: Path.expand("../proto/ql2.proto", __DIR__)
-
-  # Load a extra modules methods
-  use_in :Datum, QL2.DatumHelpers
-  use_in :Response, QL2.ResponseHelpers
-  use_in :Query, QL2.QueryHelpers
+  use Protobuf, from: Path.expand("../proto/ql2.proto", __DIR__), only: [:Term, :AssocPair, :VersionDummy, :Version]
 
   @doc """
   Helper to get a proto version
@@ -22,7 +17,7 @@ defmodule QL2 do
   in query global_opts.
   """
   def global_database(database) do
-    __MODULE__.Query.AssocPair.new(
+    QL2.Query.AssocPair.new(
       key: "db", val: Rethinkdb.Rql.db(database).build
     )
   end

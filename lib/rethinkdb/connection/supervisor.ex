@@ -15,8 +15,6 @@ defmodule Rethinkdb.Connection.Supervisor do
   def start_worker(%Options{} = options) do
     ref    = make_ref()
     worker = worker(Connection, [options], id: ref, restart: :temporary)
-    :supervisor.start_child(
-      __MODULE__, worker
-    )
+    Supervisor.start_child(__MODULE__, worker)
   end
 end

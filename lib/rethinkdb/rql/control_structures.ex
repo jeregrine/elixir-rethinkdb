@@ -6,7 +6,7 @@ defmodule Rethinkdb.Rql.ControlStructures do
         new_term(:'FUNCALL', [func(expr), args])
       end
 
-      def for_each(write_query, %Rql{} = query) do
+      def for_each(write_query, %{} = query) do
         new_term(:'FOREACH', [func(write_query)], query)
       end
 
@@ -18,7 +18,7 @@ defmodule Rethinkdb.Rql.ControlStructures do
         new_term(:'ERROR', [message])
       end
 
-      def default(value, %Rql{} = query) do
+      def default(value, %{} = query) do
         new_term(:'DEFAULT', [value], query)
       end
 
@@ -26,13 +26,9 @@ defmodule Rethinkdb.Rql.ControlStructures do
         make_array(Enum.to_list(range))
       end
 
-      def expr(%Rql{} = query), do: query
+      def expr(%{} = query), do: query
       def expr([head|_] = value) when is_tuple(head) do
-        expr(HashDict.new(value))
-      end
-
-      def expr(value) when is_record(value, HashDict) do
-        make_obj(value)
+        make_obj(HashDict.new(value))
       end
 
       def expr(values) when is_list(values) do
@@ -45,15 +41,15 @@ defmodule Rethinkdb.Rql.ControlStructures do
         new_term(:'JAVASCRIPT', [js_string], opts)
       end
 
-      def coerce_to(type_name, %Rql{} = query) do
+      def coerce_to(type_name, %{} = query) do
         new_term(:'COERCE_TO', [type_name], query)
       end
 
-      def type_of(%Rql{} = query) do
+      def type_of(%{} = query) do
         new_term(:'TYPEOF', [], query)
       end
 
-      def info(%Rql{} = query) do
+      def info(%{} = query) do
         new_term(:'INFO', [], query)
       end
 

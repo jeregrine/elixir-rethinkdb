@@ -43,6 +43,7 @@ defmodule Rethinkdb.Connection do
     case connect(options) do
       {:ok, conn} -> conn
       {:error, error} ->
+        IO.inspect(error)
         raise RqlDriverError,
           msg: "Failed open connection",
           backtrace: error
@@ -99,18 +100,18 @@ defmodule Rethinkdb.Connection do
   end
 
   @spec run(Term.t, t) :: response
-  def run(%Term{} = query, %__MODULE__{pid: pid}) do
+  def run(%{} = query, %__MODULE__{pid: pid}) do
     :gen_server.call(pid, {:run, query})
   end
 
   @spec run(Term.t) :: response
-  def run(%Term{} = query) do
+  def run(%{} = query) do
     run(query, %__MODULE__{pid: @default_key})
   end
 
   # TODO: Add test for error on the socket
   @spec run!(Term.t, t) :: any | [any] | no_return
-  def run!(%Term{} = query, %__MODULE{} = conn) do
+  def run!(%{} = query, %__MODULE__{} = conn) do
     case run(query, conn) do
       {:ok, response} -> response
       {:error, msg} when is_bitstring(msg) ->
@@ -121,7 +122,7 @@ defmodule Rethinkdb.Connection do
   end
 
   @spec run!(Term.t) :: any | [any] | no_return
-  def run!(%Term{} = query) do
+  def run!(%{} = query) do
     run!(query, %__MODULE__{pid: @default_key})
   end
 
@@ -135,7 +136,7 @@ defmodule Rethinkdb.Connection do
   @spec init(Options.t) :: {:ok, State.t} | { :stop, String.t }
   def init(%Options{} = options) do
     Process.flag(:trap_exit, true)
-    socket = Socket.connect!(options).process!(self)
+    socket = Socket.connect!(options) |> Socket.process!(self)
     Authentication.auth!(socket, options)
     {:ok, %State{options: options, socket: socket}}
   rescue
@@ -159,17 +160,17 @@ defmodule Rethinkdb.Connection do
     { :reply, db, state}
   end
 
-  def handle_call({:run, %Term{} = term}, _from,
-    State[next_token: token, socket: socket,
-      options: Options[db: db, timeout: timeout]
-    ] = state) do
+  def handle_call({:run, %{} = term}, _from,
+    %State{next_token: token, socket: socket,
+      options: %Options{db: db, timeout: timeout}
+    } = state) do
 
     query = Query.new_start(term, db, token)
     response = send_and_recv(query, socket, timeout)
     { :reply, response, state.next_token(token + 1) }
   end
 
-  def handle_cast({:use, database}, State[options: options] = state) do
+  def handle_cast({:use, database}, %State{options: options} = state) do
     state = state.options(options.db(database))
     { :noreply, state }
   end
@@ -179,7 +180,7 @@ defmodule Rethinkdb.Connection do
   end
 
   defp send_and_recv(query, socket, timeout) do
-    socket.tcp_send!(query.encode_to_send)
+    socket.tcp_send!(Query.encode(query))
     Response.decode(recv(socket, timeout)).value
   rescue
     x in [Socket.Error]  -> {:error, x.message}

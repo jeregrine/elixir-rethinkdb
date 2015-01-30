@@ -22,7 +22,7 @@ defmodule Rethinkdb.Connection.Socket do
 
   # Open connect in passive mode
   def connect!(%Options{host: address, port: port}) do
-    address = String.to_char_list!(address)
+    address = String.to_char_list(address)
 
     opts = [:binary | [packet: :raw, active: false]]
     case :gen_tcp.connect(address, port, opts) do
@@ -31,8 +31,8 @@ defmodule Rethinkdb.Connection.Socket do
     end
   end
 
-  @spec process!(pid, t) :: t | no_return
-  def process!(pid, %__MODULE__{socket: socket} = record) do
+  @spec process!(t,pid) :: t | no_return
+  def process!(%__MODULE__{socket: socket} = record, pid) do
     case :gen_tcp.controlling_process(socket, pid) do
       :ok -> record
       {:error, msg} -> raise Error, msg: msg
@@ -76,7 +76,7 @@ defmodule Rethinkdb.Connection.Socket do
 
   @spec recv_until_null!(binary, number, t) :: binary
   defp recv_until_null!(acc, timeout, %__MODULE__{} = record) do
-    result = << acc :: binary, record.recv!(0, timeout) :: binary >>
+    result = << acc :: binary, recv!(0, timeout, record) :: binary >>
     case String.slice(result, -1, 1) do
       << 0 >> ->
         String.slice(result, 0, :erlang.iolist_size(result) - 1)

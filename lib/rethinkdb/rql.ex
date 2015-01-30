@@ -8,7 +8,7 @@ defmodule Rethinkdb.Rql do
   @type conn   :: Rethinkdb.Connection
   @type url    :: String.t
   @type params :: Keyword.t | Options.t
-  @type term   :: Term.t
+  @type term2  :: Term.t
   @type name   :: String.t | atom
 
   @type response :: success | error
@@ -16,7 +16,7 @@ defmodule Rethinkdb.Rql do
   @type error    :: {:error, binary, atom, any}
 
   @typep datum_arg :: :null | boolean | number | binary
-  @typep expr_arg :: Dict.t | {any, any} | [expr_arg] | fun | atom | term | Term.AssocPair.t | datum_arg
+  @typep expr_arg :: Dict.t | {any, any} | [expr_arg] | fun | atom | term2 | Term.AssocPair.t | datum_arg
 
   # TODO: Adding support initial expr
   @spec r :: module
